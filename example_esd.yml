@@ -1,0 +1,5 @@
+esd:
+  username: your_esd_username
+  secret: your_long_and_complicated_esd_password
+  # hidden_file is important.  check the README for more details.
+  hidden_file: /VirtualDocuments/Access/your_network/complicated_hash/
