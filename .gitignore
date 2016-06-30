@@ -87,3 +87,10 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+# pycharm
+*.Idea
+
+# auto_eSD specific
+Access.zip
+esd.yml
