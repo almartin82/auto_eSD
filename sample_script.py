@@ -3,12 +3,15 @@ import process_data
 import os
 import pyodbc
 import csv
+import pandas as pd
 
 
 def fetch_and_unzip():
     get_data.fetch_access_db()
     process_data.unzip()
     access_con = connect_access()
+    write_tables(access_con)
+    access_con.close()
 
 
 def connect_access(access_db=os.path.join(os.getcwd(), 'access_backup', 'Access.accdb')):
@@ -29,44 +32,44 @@ def connect_access(access_db=os.path.join(os.getcwd(), 'access_backup', 'Access.
     return con
 
 
-def write_tables(access_con):
+def write_tables(access_con, dest_folder='csvs'):
     """
     Takes a open access cursor.  Iterates over all the tables and views.  Writes a .csv for
     each view into a folder.
 
     Args:
-        cursor: open pyodbc connection.  Output of connect_access().
+        access_con: open pyodbc connection.  Output of connect_access().
+        dest_folder: destination folder to write csv files
 
     Returns:
         bool: True for success, False otherwise.
     """
-    cur1 = access_con.cursor()
-    cur2 = access_con.cursor()
-    all_tables = cur1.tables(tableType='TABLE').fetchall()
+    if not os.path.exists(dest_folder):
+        os.makedirs(dest_folder)
+
+    cur = access_con.cursor()
+    all_tables = cur.tables().fetchall()
 
     for table in all_tables:
         table_name = table.table_name
+        table_type = table.table_type
+
+        if table_type ==  'SYSTEM TABLE':
+            continue
+
         print(table_name)
-        cur2.execute("SELECT * FROM [%s]" % table_name)
-        row = cur2.fetchone()
-        if row:
-            print(row)
 
-        results = cur2.fetchall()
-        if results:
-            with open(table_name + '.csv', 'wb') as f:
-                csv.writer(f, quoting=csv.QUOTE_NONE).writerows(results)
+        # different SQL rules about ambiguous columns mean that some views can't be fetched
+        # by sqlalchemy.
+        try:
+            df = pd.read_sql("SELECT * FROM [%s]" % table_name, access_con)
+            file_name = table_type[:1].lower() + table_name
+            df.to_csv(path_or_buf=os.path.join(dest_folder, "%s.csv" % file_name), index=False)
+        except Exception as e:
+            print(e)
 
-        # cursor.execute("SELECT * FROM %s" % table_name)
-        # results = cursor.fetchone()
-        # print(results)
-        # for table_name in table_names:
-        #     write_table(table_name.name)
-        #
-        # cursor.execute("SELECT * FROM %s" % table_name)
-
-    # cur2.execute("SELECT * FROM Staff").fetchone()
-    # cur2.execute("SELECT * FROM [%s]" % 'Class Count').fetchone()
+    cur.close()
+    return True
 
 if __name__ == '__main__':
     fetch_and_unzip()
