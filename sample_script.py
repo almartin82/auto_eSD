@@ -1,17 +1,24 @@
-import get_data
-import process_data
+from auto_eSD import get_data, process_data
 import os
 import pyodbc
-import csv
 import pandas as pd
 
 
 def fetch_and_unzip():
+    """
+    PPN's ETL process using the auto_eSD package.  assumes Windows environment.
+
+    Returns:
+        bool: True if successful
+    """
+
     get_data.fetch_access_db()
     process_data.unzip()
     access_con = connect_access()
-    write_tables(access_con)
+    write_csvs(access_con)
     access_con.close()
+
+    return True
 
 
 def connect_access(access_db=os.path.join(os.getcwd(), 'access_backup', 'Access.accdb')):
@@ -25,14 +32,12 @@ def connect_access(access_db=os.path.join(os.getcwd(), 'access_backup', 'Access.
     Returns:
         object: a pyodbc connection object.
     """
-    driver_string = 'Microsoft Access Driver (*.mdb, *.accdb)'
 
-    # connect to db
-    con = pyodbc.connect('DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=%s' %(access_db))
+    con = pyodbc.connect('DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=%s' % access_db)
     return con
 
 
-def write_tables(access_con, dest_folder='csvs'):
+def write_csvs(access_con, dest_folder='csvs'):
     """
     Takes a open access cursor.  Iterates over all the tables and views.  Writes a .csv for
     each view into a folder.
@@ -44,6 +49,7 @@ def write_tables(access_con, dest_folder='csvs'):
     Returns:
         bool: True for success, False otherwise.
     """
+
     if not os.path.exists(dest_folder):
         os.makedirs(dest_folder)
 
@@ -54,7 +60,7 @@ def write_tables(access_con, dest_folder='csvs'):
         table_name = table.table_name
         table_type = table.table_type
 
-        if table_type ==  'SYSTEM TABLE':
+        if table_type == 'SYSTEM TABLE':
             continue
 
         print(table_name)

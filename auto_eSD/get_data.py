@@ -1,7 +1,9 @@
 from __future__ import print_function
+
 import requests
 from bs4 import BeautifulSoup
-from config import secrets
+
+from auto_eSD.config import secrets
 
 # constants read from the esd.yml file.  check the README for more information
 ESD_USERNAME = secrets['esd']['username']
