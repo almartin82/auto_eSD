@@ -29,7 +29,7 @@ def connect_access(access_db=os.path.join(os.getcwd(), 'access_backup', 'Access.
     return con
 
 
-def write_tables(con):
+def write_tables(access_con):
     """
     Takes a open access cursor.  Iterates over all the tables and views.  Writes a .csv for
     each view into a folder.
@@ -40,17 +40,23 @@ def write_tables(con):
     Returns:
         bool: True for success, False otherwise.
     """
-    cur1 = con.cursor()
-    cur2 = con.cursor()
-    all_tables = cur1.tables(tableType='TABLE')
+    cur1 = access_con.cursor()
+    cur2 = access_con.cursor()
+    all_tables = cur1.tables(tableType='TABLE').fetchall()
 
     for table in all_tables:
         table_name = table.table_name
         print(table_name)
         cur2.execute("SELECT * FROM [%s]" % table_name)
-        # row = cursor.fetchone()
-        # if row:
-        #     print(row)
+        row = cur2.fetchone()
+        if row:
+            print(row)
+
+        results = cur2.fetchall()
+        if results:
+            with open(table_name + '.csv', 'wb') as f:
+                csv.writer(f, quoting=csv.QUOTE_NONE).writerows(results)
+
         # cursor.execute("SELECT * FROM %s" % table_name)
         # results = cursor.fetchone()
         # print(results)
@@ -58,10 +64,9 @@ def write_tables(con):
         #     write_table(table_name.name)
         #
         # cursor.execute("SELECT * FROM %s" % table_name)
-        # with open(table_name + '.csv', 'wb') as f:
-        #     csv.writer(f, quoting=csv.QUOTE_NONE).writerows(cursor.fetchall())
 
-
+    # cur2.execute("SELECT * FROM Staff").fetchone()
+    # cur2.execute("SELECT * FROM [%s]" % 'Class Count').fetchone()
 
 if __name__ == '__main__':
     fetch_and_unzip()

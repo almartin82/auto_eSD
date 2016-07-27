@@ -14,7 +14,7 @@ def _load_secrets(path=None):
         dict: A dictionary of private credential key/values
     """
     if path is None:
-        path = os.path.join(expanduser('~'), '.esd.yml')
+        path = os.path.join(expanduser('~'), 'esd.yml')
 
     with open(path, 'r') as f:
         data_map = yaml.safe_load(f)
